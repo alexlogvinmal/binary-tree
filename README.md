@@ -1,46 +1,170 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+приложение react + typescript  задача создать конструктор создания  бинарного дерева, должен быть главный узел у него есть две кнопки одна для создания узла справа другая для создания узла слева, у новых узлов так же должна быть возможность создавать дочерние узлы слева/справа и тд, после создания узла кнопка для его создания должна проподать у родителя (например после созданиия узла справа кнопка add right должна пропасть у родителя, так же и в случае если узел создоется слева у родителя должна пропасть кнопка add left) так же созданное бинарное дерево можно передвигать мышкой по всей странице
 
-## Available Scripts
 
-In the project directory, you can run:
+import { useState } from 'react';
+import Draggable from 'react-draggable';
 
-### `npm start`
+import './App.css'; // Импортируем файл со стилями
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+interface Node {
+  id: number;
+  name: string;
+  left?: Node;
+  right?: Node;
+  position?: { x: number; y: number };
+}
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+const App = () => {
+  const [root, setRoot] = useState<Node | null>(null);
 
-### `npm test`
+  const createNode = (parent: Node, side: 'left' | 'right') => {
+    const newNode: Node = { id: Math.random(), name: '' };
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    if (side === 'left') {
+      parent.left = newNode;
+      newNode.position = {
+        x: parent.position ? parent.position.x - 150 : -150,
+        y: parent.position ? parent.position.y + 100 : 100,
+      };
+    } else {
+      parent.right = newNode;
+      newNode.position = {
+        x: parent.position ? parent.position.x + 150 : 150,
+        y: parent.position ? parent.position.y + 100 : 100,
+      };
+    }
 
-### `npm run build`
+    setRoot({ ...root } as Node);
+  };
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+  const renderNode = (node: Node) => {
+    return (
+      <Draggable
+        key={node.id}
+        position={node.position}
+        onStop={(e, data) => handleDragStop(node, data)}
+      >
+        <div className="node">
+          <input
+            type="text"
+            value={node.name}
+            onChange={(e) => handleNameChange(node, e.target.value)}
+          />
+          <div className="buttons">
+            <button
+              onClick={() => createNode(node, 'left')}
+              disabled={!!node.left}
+            >
+              Add Left
+            </button>
+            <button
+              onClick={() => createNode(node, 'right')}
+              disabled={!!node.right}
+            >
+              Add Right
+            </button>
+          </div>
+          <div className="children">
+            {node.left && renderNode(node.left)}
+            {node.right && renderNode(node.right)}
+          </div>
+        </div>
+      </Draggable>
+    );
+  };
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  const handleNameChange = (node: Node, name: string) => {
+    node.name = name;
+    setRoot({ ...root } as Node);
+  };
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+  const handleDragStop = (node: Node, data: any) => {
+    node.position = { x: data.x, y: data.y };
+    setRoot({ ...root } as Node);
+  };
 
-### `npm run eject`
+  return (
+    <div className="app">
+      <div className="tree-container">
+        {root && renderNode(root)}
+        {!root && (
+          <button
+            className="add-root-button"
+            onClick={() => setRoot({ id: Math.random(), name: '' })}
+          >
+            Add Root Node
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+export default App;
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+.tree-container {
+  position: relative;
+}
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  position: absolute;
+  background-color: #fff;
+}
+
+.node input {
+  margin-bottom: 10px;
+}
+
+.node button {
+  margin: 5px;
+}
+
+.node.left {
+  transform: translate(-50%, 0);
+}
+
+.node.right {
+  transform: translate(50%, 0);
+}
+
+.node:before {
+  content: '';
+  display: block;
+  width: 0;
+  height: 100px;
+  border-left: 1px solid #ccc;
+  position: absolute;
+  left: -1px;
+  bottom: 0;
+}
+
+.node.left:before {
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  transform: translateX(-50%);
+}
+
+.node.right:before {
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  transform: translateX(50%);
+}
+
+.children {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+}
